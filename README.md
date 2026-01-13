@@ -18,50 +18,46 @@
 
 ### The Premise
 
-You are Associate #44721, trapped in an infinite shift at a haunted fulfillment center. Pack items into totes while navigating endless aisles, avoiding your demonic boss Lyon, and maintaining your Rate above 0%.
-
-**The Rate is God. Drop below 20% and Lyon transforms into a reality-warping demon.**
+You are Associate #44721, trapped in an infinite shift at a haunted fulfillment center. Pack possessed items into totes while navigating endless aisles and evading Lyon, your boss who transforms into a demon when your productivity drops.
 
 ---
 
 ## 🎯 Core Systems
 
-### Dual Screen Architecture
-- **Bottom Screen (Puzzle)**: Drag-and-drop Tetris-style packing with possessed items
-- **Top Screen (Horror)**: Auto-scrolling aisles with Lyon AI patrol/pursuit
+### Dual-Screen Gameplay
+- **Bottom Screen:** Physics-based item packing with "possessed" objects that expand and resist containment
+- **Top Screen:** Auto-scrolling horror aisles with stealth mechanics and timing-based stowing
+- **Unified Pressure:** The "Rate" stat connects both screens - poor performance in one affects the other
 
-### The "Jive" Mechanic
-Possessed items actively expand and fight back. Players must **tap to suppress** expansion before items explode and trigger alarms.
+### The Rate System
+Your efficiency percentage (0-100%) controls:
+- Item possession frequency
+- Lyon's AI state (Patrol → Audit → Demon)
+- Environmental corruption (clean → bloody → eldritch)
+- Game phase transitions
 
-### Lyon AI State Machine
-```
-DORMANT → PATROL → AUDIT → DEMON_PURSUIT
-```
-- **Patrol**: Random pauses to stare at player
-- **Audit**: Evaluates tote efficiency, penalizes poor packing
-- **Demon Mode**: Constant Rate drain, relentless pursuit (triggers at Rate < 20%)
-
-### Phase System
-1. **Tutorial** (Rate 100-80%): Clean corporate aesthetic
-2. **Normal** (Rate 80-20%): Gradual corruption, items start possessing
-3. **Demon Hour** (Rate < 20%): Full horror mode, Lyon transforms
+### Lyon AI
+Four-state boss system:
+- **DORMANT** (Tutorial)
+- **PATROL** (Ambient threat)
+- **AUDIT** (Direct inspection)
+- **DEMON_PURSUIT** (Rate < 20%, constant drain)
 
 ---
 
-## 🛠️ Development Pipeline
+## 🏗️ Development Pipeline
 
-### The "Guerrilla Stack"
-- **Engine**: Godot 4.3 (Mobile Renderer, Forward+)
-- **Platform**: Android 10+ / iOS 15+ (Portrait, 1080x1920)
-- **Primary Development**: Mobile-first (Pixel 10 + external keyboard)
-- **AI-Assisted**: Claude 4.5 + Gemini 2.5 for code generation
-- **Version Control**: GitHub with direct API integration
+This project uses a **Guerrilla Development Pipeline** optimized for:
+- **Mobile-first development** (Android primary platform)
+- **AI-assisted workflows** (Claude, Gemini for code generation)
+- **Godot-MCP integration** (Direct AI scene manipulation)
+- **Modular architecture** (Signal-based system integration)
 
-### Mobile-First Constraints
-- Target: 60fps on mid-range Android (512MB memory budget)
-- Input: Touch gestures only (swipe, tap, drag)
-- Assets: 16-bit pixel art (4x integer scaling)
-- Audio: 32 polyphony max, OGG Vorbis compression
+### The Vagrant Architect Framework
+Based on the "Asymmetric Stack" methodology:
+- **Gemini 2.5** → Heavy logic, architectural planning, massive context
+- **Claude 4.5** → Code refinement, documentation, agent orchestration
+- **Godot 4.3** → Mobile-optimized engine with native Android editor support
 
 ---
 
@@ -69,31 +65,38 @@ DORMANT → PATROL → AUDIT → DEMON_PURSUIT
 
 ```
 stowdie-infinite-shift/
+├── README.md                          # This file
 ├── docs/
-│   ├── GDD/                     # Game Design Documents
-│   │   ├── MANIFEST.md          # Master document tracker
-│   │   ├── CORE_SYSTEMS.md      # Mechanics deep-dive
-│   │   ├── ASSET_LIBRARY.md     # Visual/audio specifications
-│   │   └── NARRATIVE_BIBLE.md   # Story, characters, world-building
-│   ├── AGENT_CONTEXTS/          # AI agent instruction sets
-│   │   ├── ARCHITECT.md         # System design specialist
-│   │   ├── IMPLEMENTER.md       # Code generation specialist
-│   │   ├── AUDITOR.md           # QA and validation specialist
-│   │   └── SCRIBE.md            # Documentation specialist
-│   └── WORKORDERS/              # Structured task assignments
-│       └── TEMPLATE.md          # Standard work order format
+│   ├── GDD/                           # Game Design Documents
+│   │   ├── 00_MANIFEST.md             # Master index
+│   │   ├── 01_CORE_PILLARS.md         # Design philosophy
+│   │   ├── 02_SYSTEMS_REFERENCE.md    # Technical specifications
+│   │   ├── 03_ASSET_BIBLE.md          # Visual/audio guidelines
+│   │   └── 04_NARRATIVE_CODEX.md      # Story and world-building
+│   │
+│   ├── AGENT_CONTEXTS/                # AI Agent System Prompts
+│   │   ├── ORCHESTRATOR.md            # Master coordinator (Claude Haiku)
+│   │   ├── ARCHITECT.md               # System designer (Gemini Pro)
+│   │   ├── CODER.md                   # Implementation specialist
+│   │   └── ARTISAN.md                 # Asset creator
+│   │
+│   ├── WORKORDERS/                    # Task delegation templates
+│   │   └── TEMPLATE.md                # Standard work order format
+│   │
+│   └── BUILD_LOGS/                    # Development audit trail
+│       └── STOW-AI-BUILD-001.md       # Top screen systems
+│
 ├── engine/
-│   └── godot_project/           # Godot 4.3 project files
+│   └── godot_project/                 # Godot 4.3 project
+│       ├── project.godot
 │       ├── scenes/
 │       ├── scripts/
 │       ├── assets/
-│       └── project.godot
-├── assets/
-│   ├── sprites/                 # Pixel art (16-bit indexed)
-│   ├── audio/                   # SFX and music (OGG)
-│   └── shaders/                 # Custom GLSL shaders
+│       └── addons/
+│
 └── .github/
-    └── workflows/               # CI/CD automation
+    └── workflows/                     # CI/CD automation
+        └── gdd-validation.yml
 ```
 
 ---
@@ -101,64 +104,27 @@ stowdie-infinite-shift/
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Godot 4.3+ (or Godot Android Editor)
-- Git with GitHub authentication
-- (Optional) External keyboard + mouse for mobile dev
+- **Godot 4.3** (Mobile Renderer recommended)
+- **Android device** with Godot Android Editor (optional but recommended)
+- **Git** for version control
+- **AI access** (Claude Pro / Gemini Advanced for development assistance)
 
-### Clone Repository
+### Clone the Repository
 ```bash
 git clone https://github.com/Alphav00/stowdie-infinite-shift.git
 cd stowdie-infinite-shift
 ```
 
-### Open in Godot
-```bash
-cd engine/godot_project
-godot project.godot
-```
-
-### Mobile Development Setup
-1. Install [Godot Android Editor](https://godotengine.org/download/android/) on device
-2. Clone repo via Termux or GitHub mobile app
-3. Open `engine/godot_project/project.godot` in Godot Android
-
 ---
 
-## 📚 Documentation
+## 📖 Documentation
 
-### Game Design Documents
-- **[GDD Manifest](docs/GDD/MANIFEST.md)** - Central document tracker (Living GDD)
-- **[Core Systems](docs/GDD/CORE_SYSTEMS.md)** - Detailed mechanics specifications
-- **[Asset Library](docs/GDD/ASSET_LIBRARY.md)** - Visual and audio asset specifications
-- **[Narrative Bible](docs/GDD/NARRATIVE_BIBLE.md)** - Story, characters, world-building
+The `docs/GDD/` directory contains the **Living GDD** - a version-controlled, machine-readable design document.
 
-### AI Agent Contexts
-Specialized instruction sets for AI-assisted development:
-- **[Architect](docs/AGENT_CONTEXTS/ARCHITECT.md)** - System architecture and design patterns
-- **[Implementer](docs/AGENT_CONTEXTS/IMPLEMENTER.md)** - GDScript code generation
-- **[Auditor](docs/AGENT_CONTEXTS/AUDITOR.md)** - Code review and validation
-- **[Scribe](docs/AGENT_CONTEXTS/SCRIBE.md)** - Documentation and technical writing
-
----
-
-## 🤖 AI-Assisted Workflow
-
-This project uses the **"Vagrant Architect × Crystalline Lattice"** methodology:
-
-### Development Modes
-- **MODE A: Field Command** (Mobile) - Voice dictation → AI sanitization → Code generation
-- **MODE B: Ping-Pong** - Gemini for structure, Claude for implementation
-- **MODE C: Chronos Sync** - Automated CI/CD with GitHub Actions
-- **MODE D: Self-Heal** - Error-driven prompt mutation and learning
-
-### Work Order System
-All tasks are routed through structured work orders (`docs/WORKORDERS/`) containing:
-- Agent role assignment
-- Signal packet (required context)
-- Acceptance criteria (Gherkin scenarios)
-- Integration dependencies
-
-See [TEMPLATE.md](docs/WORKORDERS/TEMPLATE.md) for the standard format.
+**Key files:**
+- **00_MANIFEST.md** - Project overview and navigation
+- **02_SYSTEMS_REFERENCE.md** - Complete technical specifications
+- **BUILD_LOGS/** - Detailed implementation records
 
 ---
 
@@ -166,105 +132,38 @@ See [TEMPLATE.md](docs/WORKORDERS/TEMPLATE.md) for the standard format.
 
 ### ✅ Completed
 - [x] Comprehensive Game Design Document (92 pages)
-- [x] Core pixel art assets (characters, items, environment tiles)
-- [x] Technical architecture (dual SubViewport system)
-- [x] GameManager with Rate/Phase systems
-- [x] Lyon AI state machine (DORMANT → PATROL → AUDIT → DEMON)
+- [x] Core pixel art assets (characters, environment, items)
+- [x] Dual SubViewport architecture
+- [x] GameManager singleton with phase system
+- [x] Lyon AI state machine (4 states)
 - [x] Infinite aisle scrolling with object pooling
-- [x] Mobile input handling (gesture detection)
 
 ### 🚧 In Progress
-- [ ] Bottom screen packing mechanics
-- [ ] Item possession system ("The Jive")
-- [ ] Visual corruption shaders
-- [ ] Audio system integration
-- [ ] Tutorial sequence
-
-### 📋 Roadmap
-1. **STOW-AI-BUILD-002**: Bottom screen physics prototype
-2. **STOW-AUDIO-001**: Dynamic music crossfading system
-3. **STOW-VFX-001**: Corruption shaders and particle effects
-4. **STOW-POLISH-001**: Mobile optimization pass
-5. **STOW-RELEASE-001**: Platform submission preparation
+- [ ] Physics item expansion mechanic
+- [ ] Tote container collision scoring
+- [ ] Swipe gesture integration
+- [ ] Audio system implementation
 
 ---
 
-## 🎨 Art Style
+## 🛠️ Development Tools
 
-**"Corporate Decay Pixel Art"**
-- Base resolution: 16px sprites (4x scaled to 64px display)
-- Palette: Hyper-saturated corporate colors → desaturated horror
-- Animation: 3-4 frame cycles (walk, idle, expansion)
-- Corruption stages: Clean → Dirty → Bloody
+### Mobile-First Stack
+- **Godot 4.3** - Primary engine
+- **Termux** - Linux environment on Android
+- **GitHub Mobile** - Repository management
 
-### Visual Progression
-```
-Phase 1: Safety-vest orange, motivational posters, Comic Sans
-Phase 2: Sickly greens, blood decals, Lyon's mug grows teeth
-Phase 3: Glitch art, meat textures, barcodes reading "HELP ME"
-```
-
----
-
-## 🔊 Audio Design
-
-**Musical Concept:** Bossa nova Muzak → grindcore industrial
-
-- **Shift Start** (Normal Phase): Elevator music, 120 BPM, light percussion
-- **Demon Hour**: Bossa nova samples reversed, blast beats, 240 BPM
-- **SFX**: Scanner beeps, Lyon roars, item explosions, whispered dialogue
-
----
-
-## 🎯 Design Pillars
-
-1. **Bicameral Panic** - Cognitive overload through dual-screen asymmetry
-2. **Silly Horror** - Tonal whiplash between corporate absurdism and body horror
-3. **Tactile Jank** - Physics chaos mirrors workplace frustration
-
-### Thematic Core
-**"Efficiency metrics as reality-warping force"** - The game's horror emerges from the psychological truth that modern labor systems demand impossible productivity, then punish workers when reality can't keep up.
-
----
-
-## 🤝 Contributing
-
-This is a personal indie project, but feedback and suggestions are welcome!
-
-### Reporting Issues
-- Use GitHub Issues for bugs or design feedback
-- Include: Device model, OS version, steps to reproduce
-
-### Code Style
-- GDScript with static typing (`var name: Type`)
-- 80-character line limit (mobile readability)
-- Signal-based architecture (no direct function calls across systems)
+### AI Integration
+- **Claude 4.5 Sonnet** - Code generation, orchestration
+- **Gemini 2.5 Pro** - Architectural design
+- **Godot-MCP** - Direct AI scene manipulation
 
 ---
 
 ## 📄 License
 
-**Proprietary** - All rights reserved. This is a commercial indie game project.
-
-Source code is shared for educational/portfolio purposes but not licensed for reuse.
+**Proprietary** - All rights reserved. Commercial indie game project.
 
 ---
 
-## 👤 Creator
-
-**Chi (@Alphav00)**
-- Mobile-first indie developer
-- AI-assisted development advocate
-- "Guerrilla Pipeline" methodology pioneer
-
----
-
-## 🔗 Links
-
-- **GitHub**: [github.com/Alphav00/stowdie-infinite-shift](https://github.com/Alphav00/stowdie-infinite-shift)
-- **Documentation**: [Full GDD](docs/GDD/MANIFEST.md)
-- **Development Log**: [Work Orders](docs/WORKORDERS/)
-
----
-
-**"The Rate is God. Stow or Die."** 📦💀
+**"Your shift never ends. Stow or die."**
