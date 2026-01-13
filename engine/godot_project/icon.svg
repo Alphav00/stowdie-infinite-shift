@@ -1,0 +1,14 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#1a1a2e"/>
+  
+  <!-- Box shape (stylized package) -->
+  <rect x="32" y="40" width="64" height="48" fill="#4a4a6a" stroke="#7a7a9a" stroke-width="2"/>
+  
+  <!-- Tape cross -->
+  <rect x="60" y="40" width="8" height="48" fill="#cc785c"/>
+  <rect x="32" y="60" width="64" height="8" fill="#cc785c"/>
+  
+  <!-- "S" for Stow -->
+  <text x="64" y="110" font-family="monospace" font-size="32" font-weight="bold" fill="#7c4dff" text-anchor="middle">S</text>
+</svg>
