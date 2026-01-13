@@ -1,0 +1,62 @@
+# Godot 4.x
+.godot/
+*.translation
+*.import
+export.cfg
+export_presets.cfg
+
+# Godot-specific
+.mono/
+data_*/
+mono_crash.*.json
+
+# Build artifacts
+builds/
+*.apk
+*.aab
+*.ipa
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Android
+.gradle/
+local.properties
+*.keystore
+
+# iOS
+*.xcodeproj/
+*.xcworkspace/
+
+# Asset source files (keep exports only)
+*.aseprite
+*.psd
+*.ai
+*.blend
+*.blend1
+
+# Audio source
+*.flp
+*.aup3
+
+# Documentation builds
+docs/_build/
