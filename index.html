@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>STOW OR DIE: Infinite Shift</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --g: #10B981; --r: #EF4444; --a: #F59E0B; --d: #0A0A0F;
+    --tote: #F59E0B; --tote-dark: #B45309;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    background: var(--d); 
+    font-family: 'VT323', monospace; 
+    overflow: hidden; 
+    touch-action: none; 
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* LAYOUT - Portrait 30/10/60 split */
+  #game { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+  
+  /* TOP SCREEN - 30% */
+  #top-screen {
+    height: 30vh;
+    background: #0D1117;
+    border-bottom: 3px solid #333;
+    position: relative;
+    overflow: hidden;
+  }
+  #top-screen canvas { width: 100%; height: 100%; display: block; }
+  
+  /* HUD - 10% */
+  #hud {
+    height: 10vh;
+    min-height: 55px;
+    background: linear-gradient(180deg, #1F2937, #111827);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    border-bottom: 2px solid #333;
+  }
+  .stat { text-align: center; min-width: 65px; }
+  .stat-label { font-size: 10px; color: #6B7280; letter-spacing: 2px; }
+  .stat-val { font-family: 'Share Tech Mono', monospace; font-size: 20px; text-shadow: 0 0 8px currentColor; }
+  .green { color: var(--g); } .red { color: var(--r); } .amber { color: var(--a); } .white { color: #fff; }
+  #msg { flex: 1; text-align: center; font-size: 14px; color: var(--a); }
+
+  /* BOTTOM SCREEN - 60% */
+  #bottom-screen {
+    height: 60vh;
+    background: #1a1f2e;
+    display: flex;
+    position: relative;
+  }
+
+  /* LEFT CONTROLS - 18% */
+  #left-controls {
+    width: 18%;
+    background: #111827;
+    display: flex;
+    flex-direction: column;
+    padding: 6px 4px;
+    gap: 6px;
+    border-right: 2px solid #333;
+  }
+  .ctrl-btn {
+    flex: 1;
+    background: #374151;
+    border: 2px solid #4B5563;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #9CA3AF;
+    font-size: 9px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ctrl-btn:active { transform: scale(0.95); background: #4B5563; }
+  .ctrl-btn .icon { font-size: 22px; margin-bottom: 2px; }
+  #btn-stow.ready { background: var(--g); color: #000; border-color: #059669; animation: pulse 0.8s infinite; }
+  @keyframes pulse { 50% { opacity: 0.7; } }
+
+  /* TOTE AREA - 62% */
+  #tote-area {
+    width: 62%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: #0F172A;
+  }
+  #tote-container {
+    position: relative;
+    background: var(--tote);
+    border: 4px solid var(--tote-dark);
+    border-radius: 4px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+  }
+  .grid-cell {
+    position: absolute;
+    border: 1px solid rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.05);
+  }
+  .grid-cell.preview { background: rgba(16,185,129,0.4); border-color: var(--g); }
+  .grid-cell.invalid { background: rgba(239,68,68,0.4); border-color: var(--r); }
+
+  /* PLACED ITEMS */
+  .placed-item { position: absolute; pointer-events: none; }
+  .placed-item.possessed { animation: throb 0.4s infinite; }
+  @keyframes throb { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.4) saturate(1.5)} }
+  .shape-cell {
+    position: absolute;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-radius: 3px;
+  }
+  .item-timer {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+  }
+
+  /* CONVEYOR - 20% */
+  #conveyor {
+    width: 20%;
+    background: #1F2937;
+    border-left: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+  }
+  #conveyor-track {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 100%;
+    background: repeating-linear-gradient(0deg, #374151 0px, #374151 20px, #4B5563 20px, #4B5563 40px);
+    animation: scroll 2s linear infinite;
+  }
+  @keyframes scroll { to { background-position-y: 40px; } }
+  
+  .conveyor-item {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 48px;
+    background: #8B4513;
+    border: 3px solid #5D3A1A;
+    border-radius: 4px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #3D2010;
+    z-index: 10;
+  }
+  .conveyor-item.possessed-hint { box-shadow: 0 0 12px var(--r), inset 0 0 8px rgba(239,68,68,0.3); }
+
+  /* HOLD SLOT */
+  #hold-slot {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: #111827;
+    border: 2px dashed #4B5563;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #4B5563;
+  }
+
+  /* FILL BAR */
+  #fill-wrap {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 14px;
+    height: 70px;
+    background: #111;
+    border: 2px solid #333;
+    border-radius: 3px;
+  }
+  #fill-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--a);
+    transition: height 0.2s;
+  }
+  #fill-bar.ready { background: var(--g); box-shadow: 0 0 8px var(--g); }
+  #fill-pct {
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: #666;
+  }
+
+  /* DRAG PREVIEW */
+  #drag-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  #drag-preview.active { opacity: 0.9; }
+
+  /* OVERLAYS */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: opacity 0.3s;
+  }
+  .overlay.hidden { opacity: 0; pointer-events: none; }
+  .overlay h1 { font-size: 3rem; color: var(--r); text-shadow: 2px 2px 0 #000; animation: glitch 2s infinite; }
+  .overlay button {
+    margin-top: 20px;
+    padding: 12px 40px;
+    font-family: inherit;
+    font-size: 1.2rem;
+    background: var(--g);
+    border: none;
+    color: #000;
+    cursor: pointer;
+  }
+  @keyframes glitch { 0%,96%,100%{transform:translate(0)} 97%{transform:translate(2px,-2px)} }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+    pointer-events: none;
+    z-index: 90;
+  }
+
+  body.phase-crunch { filter: saturate(0.8) contrast(1.1); }
+  body.phase-demon { filter: saturate(0.6) contrast(1.2) hue-rotate(10deg); }
+</style>
+</head>
+<body>
+
+<div id="title" class="overlay">
+  <h1>STOW<br>OR<br>DIE</h1>
+  <p style="color:#666; margin-top:5px;">INFINITE SHIFT // v3.0</p>
+  <button id="start-btn">CLOCK IN</button>
+</div>
+
+<div id="gameover" class="overlay hidden">
+  <h1 style="font-size:2.5rem">TERMINATED</h1>
+  <p style="color:#fff; font-size:1.2rem; margin-top:15px;">SCORE: <span id="final-score">0</span></p>
+  <p style="color:#666;">STOWS: <span id="final-stows">0</span></p>
+  <button onclick="location.reload()">NEXT SHIFT</button>
+</div>
+
+<div id="game">
+  <div id="top-screen"><canvas id="top-canvas"></canvas></div>
+  
+  <div id="hud">
+    <div class="stat">
+      <div class="stat-label">RATE</div>
+      <div class="stat-val green" id="ui-rate">100%</div>
+    </div>
+    <div id="msg">WAITING...</div>
+    <div class="stat">
+      <div class="stat-label">SCORE</div>
+      <div class="stat-val white" id="ui-score">000000</div>
+    </div>
+  </div>
+
+  <div id="bottom-screen">
+    <div id="left-controls">
+      <button class="ctrl-btn" id="btn-rotate"><span class="icon">⟳</span>ROTATE</button>
+      <button class="ctrl-btn" id="btn-shove"><span class="icon">👊</span>SHOVE</button>
+      <button class="ctrl-btn" id="btn-hold"><span class="icon">📦</span>HOLD</button>
+      <button class="ctrl-btn" id="btn-stow"><span class="icon">📤</span>STOW</button>
+    </div>
+    
+    <div id="tote-area">
+      <div id="tote-container"></div>
+      <div id="fill-wrap">
+        <div id="fill-bar"></div>
+        <div id="fill-pct">0%</div>
+      </div>
+    </div>
+    
+    <div id="conveyor">
+      <div id="conveyor-track"></div>
+      <div id="hold-slot">HOLD</div>
+    </div>
+  </div>
+</div>
+
+<div id="drag-preview"></div>
+<div class="scanlines"></div>
+
+<script>
+// ============================================
+// STOW OR DIE v3.0 - GRID-BASED TETRIS
+// ============================================
+
+const GRID = { cols: 8, rows: 6 };
+const FILL_THRESHOLD = 0.85;
+const RATE_DECAY = 2; // %/sec (GDD spec)
+const POSSESSED_CHANCE = 0.15; // 15% (GDD spec)
+const POSSESSED_TIMER = 5.0; // seconds (GDD spec)
+const CONVEYOR_SPEED = 60; // px/sec
+const SPAWN_INTERVAL = 2.0;
+
+// Tetromino shapes
+const SHAPES = {
+  L:  { cells: [[0,0],[0,1],[0,2],[1,2]], color: '#F97316' },
+  J:  { cells: [[1,0],[1,1],[1,2],[0,2]], color: '#3B82F6' },
+  T:  { cells: [[0,0],[1,0],[2,0],[1,1]], color: '#A855F7' },
+  O:  { cells: [[0,0],[1,0],[0,1],[1,1]], color: '#FBBF24' },
+  I3: { cells: [[0,0],[1,0],[2,0]], color: '#06B6D4' },
+  I2: { cells: [[0,0],[1,0]], color: '#EC4899' },
+  D:  { cells: [[0,0]], color: '#8B5CF6' }
+};
+const SHAPE_KEYS = Object.keys(SHAPES);
+
+// ============================================
+// AUDIO
+// ============================================
+const Audio = {
+  ctx: null,
+  init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+  tone(f, t, d, v=0.1) {
+    if (!this.ctx) return;
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type = t; o.frequency.value = f;
+    g.gain.setValueAtTime(v, this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + d);
+    o.connect(g).connect(this.ctx.destination);
+    o.start(); o.stop(this.ctx.currentTime + d);
+  },
+  snap() { this.tone(500, 'square', 0.05, 0.08); },
+  rotate() { this.tone(350, 'sine', 0.08, 0.06); },
+  shove() { this.tone(180, 'sawtooth', 0.12, 0.1); },
+  success() { this.tone(880, 'sine', 0.12); this.tone(1100, 'sine', 0.08, 0.06); },
+  fail() { this.tone(100, 'square', 0.25, 0.12); },
+  explode() { this.tone(60, 'sawtooth', 0.3, 0.15); }
+};
+
+// ============================================
+// GAME STATE
+// ============================================
+const G = {
+  state: 'TITLE',
+  rate: 100,
+  score: 0,
+  stows: 0,
+  phase: 'NORMAL',
+  
+  grid: [], // [row][col] = itemId or null
+  items: [], // placed items
+  conveyor: [], // items on belt
+  
+  drag: null, // current drag {id, shape, possessed, rot}
+  dragX: 0, dragY: 0,
+  held: null,
+  
+  cellSize: 40,
+  toteRect: null,
+  
+  aisleOff: 0,
+  stowAnim: null,
+  
+  spawnT: 0,
+  lastT: 0,
+  itemId: 0,
+
+  // ============================================
+  // INIT
+  // ============================================
+  init() {
+    // Reset grid
+    this.grid = [];
+    for (let r = 0; r < GRID.rows; r++) {
+      this.grid[r] = [];
+      for (let c = 0; c < GRID.cols; c++) this.grid[r][c] = null;
+    }
+    this.items = [];
+    this.conveyor = [];
+    
+    this.setupTote();
+    this.setupCanvas();
+    this.setupControls();
+    this.setupDrag();
+  },
+
+  setupTote() {
+    const tote = document.getElementById('tote-container');
+    const area = document.getElementById('tote-area');
+    const rect = area.getBoundingClientRect();
+    
+    const maxW = rect.width * 0.92;
+    const maxH = rect.height * 0.88;
+    this.cellSize = Math.floor(Math.min(maxW / GRID.cols, maxH / GRID.rows));
+    
+    tote.style.width = (this.cellSize * GRID.cols) + 'px';
+    tote.style.height = (this.cellSize * GRID.rows) + 'px';
+    tote.innerHTML = '';
+    
+    for (let r = 0; r < GRID.rows; r++) {
+      for (let c = 0; c < GRID.cols; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        cell.style.left = (c * this.cellSize) + 'px';
+        cell.style.top = (r * this.cellSize) + 'px';
+        cell.style.width = this.cellSize + 'px';
+        cell.style.height = this.cellSize + 'px';
+        tote.appendChild(cell);
+      }
+    }
+  },
+
+  setupCanvas() {
+    const canvas = document.getElementById('top-canvas');
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    this.ctx = canvas.getContext('2d');
+    this.ctx.scale(dpr, dpr);
+    this.topW = rect.width;
+    this.topH = rect.height;
+  },
+
+  setupControls() {
+    document.getElementById('btn-rotate').onclick = () => this.rotate();
+    document.getElementById('btn-shove').onclick = () => this.shove();
+    document.getElementById('btn-hold').onclick = () => this.hold();
+    document.getElementById('btn-stow').onclick = () => this.stow();
+  },
+
+  setupDrag() {
+    const conv = document.getElementById('conveyor');
+    const preview = document.getElementById('drag-preview');
+    
+    const start = (e, item) => {
+      e.preventDefault();
+      const pt = e.touches ? e.touches[0] : e;
+      
+      this.drag = {
+        id: item.id,
+        shape: item.shape,
+        possessed: item.possessed,
+        rot: 0
+      };
+      this.dragX = pt.clientX;
+      this.dragY = pt.clientY;
+      
+      this.renderPreview();
+      preview.classList.add('active');
+      
+      // Hide conveyor item
+      const el = conv.querySelector(`[data-id="${item.id}"]`);
+      if (el) el.style.visibility = 'hidden';
+      
+      this.conveyor = this.conveyor.filter(c => c.id !== item.id);
+    };
+    
+    const move = (e) => {
+      if (!this.drag) return;
+      const pt = e.touches ? e.touches[0] : e;
+      this.dragX = pt.clientX;
+      this.dragY = pt.clientY;
+      preview.style.left = (this.dragX - this.cellSize) + 'px';
+      preview.style.top = (this.dragY - this.cellSize) + 'px';
+      this.showGridPreview();
+    };
+    
+    const end = () => {
+      if (!this.drag) return;
+      
+      const placed = this.tryPlace();
+      if (!placed) Audio.fail();
+      
+      this.drag = null;
+      preview.classList.remove('active');
+      preview.innerHTML = '';
+      this.clearGridPreview();
+    };
+    
+    conv.addEventListener('touchstart', e => {
+      const el = e.target.closest('.conveyor-item');
+      if (!el) return;
+      const item = this.conveyor.find(c => c.id === +el.dataset.id);
+      if (item) start(e, item);
+    }, { passive: false });
+    
+    conv.addEventListener('mousedown', e => {
+      const el = e.target.closest('.conveyor-item');
+      if (!el) return;
+      const item = this.conveyor.find(c => c.id === +el.dataset.id);
+      if (item) start(e, item);
+    });
+    
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchend', end);
+    document.addEventListener('mouseup', end);
+  },
+
+  // ============================================
+  // DRAG & DROP
+  // ============================================
+  renderPreview() {
+    const preview = document.getElementById('drag-preview');
+    preview.innerHTML = '';
+    if (!this.drag) return;
+    
+    const shape = SHAPES[this.drag.shape];
+    const cells = this.rotateCells(shape.cells, this.drag.rot);
+    const color = this.drag.possessed ? '#DC2626' : shape.color;
+    
+    cells.forEach(([c, r]) => {
+      const div = document.createElement('div');
+      div.className = 'shape-cell';
+      div.style.left = (c * this.cellSize) + 'px';
+      div.style.top = (r * this.cellSize) + 'px';
+      div.style.width = this.cellSize + 'px';
+      div.style.height = this.cellSize + 'px';
+      div.style.background = color;
+      preview.appendChild(div);
+    });
+    
+    preview.style.left = (this.dragX - this.cellSize) + 'px';
+    preview.style.top = (this.dragY - this.cellSize) + 'px';
+  },
+
+  rotateCells(cells, rot) {
+    let res = cells.map(c => [...c]);
+    for (let i = 0; i < rot; i++) {
+      res = res.map(([c, r]) => [-r, c]);
+      const minC = Math.min(...res.map(x => x[0]));
+      const minR = Math.min(...res.map(x => x[1]));
+      res = res.map(([c, r]) => [c - minC, r - minR]);
+    }
+    return res;
+  },
+
+  screenToGrid(x, y) {
+    const tote = document.getElementById('tote-container');
+    const rect = tote.getBoundingClientRect();
+    const c = Math.floor((x - rect.left) / this.cellSize);
+    const r = Math.floor((y - rect.top) / this.cellSize);
+    return { c, r, valid: c >= 0 && c < GRID.cols && r >= 0 && r < GRID.rows };
+  },
+
+  canPlace(col, row, cells) {
+    for (const [c, r] of cells) {
+      const gc = col + c;
+      const gr = row + r;
+      if (gc < 0 || gc >= GRID.cols || gr < 0 || gr >= GRID.rows) return false;
+      if (this.grid[gr][gc] !== null) return false;
+    }
+    return true;
+  },
+
+  showGridPreview() {
+    this.clearGridPreview();
+    if (!this.drag) return;
+    
+    const pos = this.screenToGrid(this.dragX, this.dragY);
+    if (!pos.valid) return;
+    
+    const shape = SHAPES[this.drag.shape];
+    const cells = this.rotateCells(shape.cells, this.drag.rot);
+    const valid = this.canPlace(pos.c, pos.r, cells);
+    
+    const tote = document.getElementById('tote-container');
+    cells.forEach(([c, r]) => {
+      const gc = pos.c + c;
+      const gr = pos.r + r;
+      const el = tote.querySelector(`[data-c="${gc}"][data-r="${gr}"]`);
+      if (el) el.classList.add(valid ? 'preview' : 'invalid');
+    });
+  },
+
+  clearGridPreview() {
+    document.querySelectorAll('.grid-cell').forEach(el => {
+      el.classList.remove('preview', 'invalid');
+    });
+  },
+
+  tryPlace() {
+    if (!this.drag) return false;
+    
+    const pos = this.screenToGrid(this.dragX, this.dragY);
+    if (!pos.valid) return false;
+    
+    const shape = SHAPES[this.drag.shape];
+    const cells = this.rotateCells(shape.cells, this.drag.rot);
+    
+    if (!this.canPlace(pos.c, pos.r, cells)) return false;
+    
+    const item = {
+      id: this.drag.id,
+      shape: this.drag.shape,
+      rot: this.drag.rot,
+      col: pos.c,
+      row: pos.r,
+      cells: cells.map(([c, r]) => [pos.c + c, pos.r + r]),
+      possessed: this.drag.possessed,
+      timer: this.drag.possessed ? POSSESSED_TIMER : 0
+    };
+    
+    // Mark grid
+    item.cells.forEach(([c, r]) => this.grid[r][c] = item.id);
+    
+    this.items.push(item);
+    this.renderItem(item);
+    Audio.snap();
+    
+    return true;
+  },
+
+  renderItem(item) {
+    const tote = document.getElementById('tote-container');
+    const shape = SHAPES[item.shape];
+    const color = item.possessed ? '#DC2626' : shape.color;
+    
+    const el = document.createElement('div');
+    el.className = 'placed-item' + (item.possessed ? ' possessed' : '');
+    el.dataset.itemId = item.id;
+    el.style.left = (item.col * this.cellSize) + 'px';
+    el.style.top = (item.row * this.cellSize) + 'px';
+    
+    const cells = this.rotateCells(SHAPES[item.shape].cells, item.rot);
+    cells.forEach(([c, r]) => {
+      const cell = document.createElement('div');
+      cell.className = 'shape-cell';
+      cell.style.left = (c * this.cellSize) + 'px';
+      cell.style.top = (r * this.cellSize) + 'px';
+      cell.style.width = this.cellSize + 'px';
+      cell.style.height = this.cellSize + 'px';
+      cell.style.background = color;
+      el.appendChild(cell);
+    });
+    
+    if (item.possessed) {
+      const timer = document.createElement('div');
+      timer.className = 'item-timer';
+      timer.textContent = item.timer.toFixed(1);
+      el.appendChild(timer);
+    }
+    
+    tote.appendChild(el);
+  },
+
+  // ============================================
+  // CONTROLS
+  // ============================================
+  rotate() {
+    if (!this.drag) return;
+    this.drag.rot = (this.drag.rot + 1) % 4;
+    this.renderPreview();
+    this.showGridPreview();
+    Audio.rotate();
+  },
+
+  shove() {
+    let hit = false;
+    this.items.forEach(item => {
+      if (item.possessed && item.timer > 0) {
+        item.timer = POSSESSED_TIMER;
+        hit = true;
+        const el = document.querySelector(`[data-item-id="${item.id}"]`);
+        if (el) {
+          el.style.transform = 'scale(0.85)';
+          setTimeout(() => el.style.transform = '', 100);
+        }
+      }
+    });
+    if (hit) {
+      Audio.shove();
+      this.rate = Math.min(100, this.rate + 1);
+    }
+  },
+
+  hold() {
+    if (!this.drag) return;
+    const temp = this.held;
+    this.held = { shape: this.drag.shape, possessed: this.drag.possessed };
+    
+    if (temp) {
+      this.drag.shape = temp.shape;
+      this.drag.possessed = temp.possessed;
+      this.drag.rot = 0;
+      this.renderPreview();
+    } else {
+      this.drag = null;
+      document.getElementById('drag-preview').classList.remove('active');
+    }
+    
+    this.updateHoldSlot();
+    Audio.snap();
+  },
+
+  updateHoldSlot() {
+    const slot = document.getElementById('hold-slot');
+    if (this.held) {
+      const shape = SHAPES[this.held.shape];
+      slot.textContent = '';
+      slot.style.background = this.held.possessed ? '#7F1D1D' : shape.color;
+      slot.style.borderStyle = 'solid';
+      slot.style.borderColor = this.held.possessed ? '#EF4444' : shape.color;
+    } else {
+      slot.textContent = 'HOLD';
+      slot.style.background = '';
+      slot.style.borderStyle = 'dashed';
+      slot.style.borderColor = '#4B5563';
+    }
+  },
+
+  stow() {
+    if (this.state !== 'PLAYING') return;
+    
+    const fill = this.getFill();
+    if (fill < FILL_THRESHOLD) {
+      this.msg(`${Math.floor(fill*100)}% - NEED 85%!`, true);
+      Audio.fail();
+      return;
+    }
+    
+    const aisleId = Math.floor((this.aisleOff + this.topW/2) / 180);
+    const open = aisleId % 2 === 0;
+    
+    this.stowAnim = { success: open, start: performance.now() };
+    setTimeout(() => this.stowAnim = null, 350);
+    
+    if (open) {
+      const bonus = Math.floor(100 * (this.rate/100) * (1 + fill));
+      this.score += bonus;
+      this.rate = Math.min(100, this.rate + 3);
+      this.stows++;
+      this.msg(`+${bonus} @ A-${aisleId}`);
+      this.clearTote();
+      Audio.success();
+    } else {
+      this.rate = Math.max(0, this.rate - 10);
+      this.msg(`A-${aisleId} BLOCKED!`, true);
+      Audio.fail();
+    }
+  },
+
+  getFill() {
+    let filled = 0;
+    for (let r = 0; r < GRID.rows; r++) {
+      for (let c = 0; c < GRID.cols; c++) {
+        if (this.grid[r][c] !== null) filled++;
+      }
+    }
+    return filled / (GRID.cols * GRID.rows);
+  },
+
+  clearTote() {
+    for (let r = 0; r < GRID.rows; r++) {
+      for (let c = 0; c < GRID.cols; c++) this.grid[r][c] = null;
+    }
+    this.items = [];
+    document.querySelectorAll('.placed-item').forEach(el => el.remove());
+  },
+
+  // ============================================
+  // CONVEYOR
+  // ============================================
+  spawn() {
+    const conv = document.getElementById('conveyor');
+    const h = conv.getBoundingClientRect().height;
+    
+    const shape = SHAPE_KEYS[Math.floor(Math.random() * SHAPE_KEYS.length)];
+    const possessed = Math.random() < POSSESSED_CHANCE;
+    
+    const item = {
+      id: ++this.itemId,
+      shape,
+      possessed,
+      y: h + 50
+    };
+    
+    this.conveyor.push(item);
+    
+    const el = document.createElement('div');
+    el.className = 'conveyor-item' + (possessed ? ' possessed-hint' : '');
+    el.dataset.id = item.id;
+    el.style.top = item.y + 'px';
+    el.textContent = '?';
+    conv.appendChild(el);
+  },
+
+  updateConveyor(dt) {
+    const conv = document.getElementById('conveyor');
+    
+    this.conveyor.forEach(item => {
+      item.y -= CONVEYOR_SPEED * dt;
+      const el = conv.querySelector(`[data-id="${item.id}"]`);
+      if (el) el.style.top = item.y + 'px';
+    });
+    
+    // Remove off-screen
+    this.conveyor = this.conveyor.filter(item => {
+      if (item.y < -50) {
+        const el = conv.querySelector(`[data-id="${item.id}"]`);
+        if (el) el.remove();
+        this.rate = Math.max(0, this.rate - 3);
+        return false;
+      }
+      return true;
+    });
+  },
+
+  // ============================================
+  // POSSESSED
+  // ============================================
+  updatePossessed(dt) {
+    const toExpand = [];
+    
+    this.items.forEach(item => {
+      if (!item.possessed || item.timer <= 0) return;
+      
+      item.timer -= dt;
+      
+      const el = document.querySelector(`[data-item-id="${item.id}"] .item-timer`);
+      if (el) el.textContent = Math.max(0, item.timer).toFixed(1);
+      
+      if (item.timer <= 0) toExpand.push(item);
+    });
+    
+    toExpand.forEach(item => this.expand(item));
+  },
+
+  expand(item) {
+    const dirs = [[0,-1],[1,0],[0,1],[-1,0]].sort(() => Math.random() - 0.5);
+    
+    for (const [dc, dr] of dirs) {
+      for (const [c, r] of item.cells) {
+        const nc = c + dc;
+        const nr = r + dr;
+        
+        if (nc < 0 || nc >= GRID.cols || nr < 0 || nr >= GRID.rows) continue;
+        
+        if (this.grid[nr][nc] === null) {
+          // Expand into empty
+          this.grid[nr][nc] = item.id;
+          item.cells.push([nc, nr]);
+          item.timer = POSSESSED_TIMER;
+          this.rerender(item);
+          Audio.explode();
+          this.rate = Math.max(0, this.rate - 5);
+          return;
+        } else if (this.grid[nr][nc] !== item.id) {
+          // Destroy neighbor
+          this.destroy(this.grid[nr][nc]);
+          this.grid[nr][nc] = item.id;
+          item.cells.push([nc, nr]);
+          item.timer = POSSESSED_TIMER;
+          this.rerender(item);
+          Audio.explode();
+          this.rate = Math.max(0, this.rate - 8);
+          return;
+        }
+      }
+    }
+  },
+
+  destroy(id) {
+    const item = this.items.find(i => i.id === id);
+    if (!item) return;
+    item.cells.forEach(([c, r]) => this.grid[r][c] = null);
+    this.items = this.items.filter(i => i.id !== id);
+    const el = document.querySelector(`[data-item-id="${id}"]`);
+    if (el) el.remove();
+  },
+
+  rerender(item) {
+    const el = document.querySelector(`[data-item-id="${item.id}"]`);
+    if (el) el.remove();
+    
+    // Recalc bounds
+    const minC = Math.min(...item.cells.map(x => x[0]));
+    const minR = Math.min(...item.cells.map(x => x[1]));
+    item.col = minC;
+    item.row = minR;
+    
+    this.renderItem(item);
+  },
+
+  // ============================================
+  // TOP SCREEN
+  // ============================================
+  drawTop(dt) {
+    const ctx = this.ctx, w = this.topW, h = this.topH;
+    
+    if (this.state === 'PLAYING') {
+      this.aisleOff += (120 + (100 - this.rate) * 0.5) * dt;
+    }
+    
+    ctx.fillStyle = '#0D1117';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Phase tint
+    if (this.phase === 'DEMON') {
+      ctx.fillStyle = `rgba(239,68,68,${0.04 + Math.sin(performance.now()/150)*0.02})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+    
+    // Aisles
+    const segW = 180;
+    const off = this.aisleOff % segW;
+    let x = -off - segW;
+    
+    while (x < w + segW) {
+      const id = Math.floor((this.aisleOff + x + off) / segW);
+      const open = id % 2 === 0;
+      
+      ctx.fillStyle = '#1F2937';
+      ctx.fillRect(x, 0, segW, h);
+      
+      // Racks
+      ctx.fillStyle = '#4B5563';
+      ctx.fillRect(x + 4, 8, 6, h - 16);
+      ctx.fillRect(x + segW - 10, 8, 6, h - 16);
+      
+      // Shelves
+      for (let sy = 25; sy < h - 25; sy += 30) {
+        ctx.fillStyle = '#374151';
+        ctx.fillRect(x + 10, sy, segW - 20, 3);
+        for (let bx = 0; bx < 4; bx++) {
+          ctx.fillStyle = `hsl(${200+Math.random()*40}, 35%, ${30+Math.random()*15}%)`;
+          ctx.fillRect(x + 14 + bx * 40, sy - 8 - Math.random()*6, 32, 8 + Math.random()*6);
+        }
+      }
+      
+      // Target
+      ctx.fillStyle = open ? '#10B981' : '#EF4444';
+      ctx.fillRect(x + segW/2 - 25, h - 35, 50, 28);
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(open ? 'OPEN' : 'BLOCKED', x + segW/2, h - 18);
+      ctx.fillText(`A-${id}`, x + segW/2, h - 28);
+      
+      x += segW;
+    }
+    
+    // Center line
+    ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(w/2, 0);
+    ctx.lineTo(w/2, h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Stow anim
+    if (this.stowAnim) {
+      const p = (performance.now() - this.stowAnim.start) / 350;
+      ctx.fillStyle = this.stowAnim.success
+        ? `rgba(16,185,129,${0.4*(1-p)})`
+        : `rgba(239,68,68,${0.4*(1-p)})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+  },
+
+  // ============================================
+  // UI
+  // ============================================
+  updateUI() {
+    const rate = document.getElementById('ui-rate');
+    const color = this.rate >= 60 ? 'green' : this.rate >= 20 ? 'amber' : 'red';
+    rate.textContent = Math.floor(this.rate) + '%';
+    rate.className = 'stat-val ' + color;
+    
+    document.getElementById('ui-score').textContent = String(this.score).padStart(6, '0');
+    
+    const fill = this.getFill();
+    const bar = document.getElementById('fill-bar');
+    bar.style.height = (fill * 100) + '%';
+    bar.className = fill >= FILL_THRESHOLD ? 'ready' : '';
+    document.getElementById('fill-pct').textContent = Math.floor(fill * 100) + '%';
+    
+    document.getElementById('btn-stow').classList.toggle('ready', fill >= FILL_THRESHOLD);
+    
+    document.body.className = this.phase === 'DEMON' ? 'phase-demon' : this.phase === 'CRUNCH' ? 'phase-crunch' : '';
+  },
+
+  msg(txt, bad = false) {
+    const el = document.getElementById('msg');
+    el.textContent = txt;
+    el.style.color = bad ? 'var(--r)' : 'var(--a)';
+  },
+
+  // ============================================
+  // MAIN LOOP
+  // ============================================
+  start() {
+    Audio.init();
+    this.init();
+    document.getElementById('title').classList.add('hidden');
+    this.state = 'PLAYING';
+    this.msg('SHIFT STARTED');
+    this.lastT = performance.now();
+    this.loop();
+  },
+
+  loop() {
+    if (this.state === 'GAMEOVER') return;
+    requestAnimationFrame(() => this.loop());
+    
+    const now = performance.now();
+    const dt = Math.min((now - this.lastT) / 1000, 0.1);
+    this.lastT = now;
+    
+    if (this.state === 'PLAYING') {
+      // Rate decay
+      this.rate = Math.max(0, this.rate - RATE_DECAY * dt);
+      if (this.rate <= 0) { this.gameOver(); return; }
+      
+      // Phase
+      if (this.rate >= 60) this.phase = 'NORMAL';
+      else if (this.rate >= 20) this.phase = 'CRUNCH';
+      else this.phase = 'DEMON';
+      
+      // Spawn
+      this.spawnT += dt;
+      if (this.spawnT >= SPAWN_INTERVAL) {
+        this.spawn();
+        this.spawnT = 0;
+      }
+      
+      this.updateConveyor(dt);
+      this.updatePossessed(dt);
+    }
+    
+    this.drawTop(dt);
+    this.updateUI();
+  },
+
+  gameOver() {
+    this.state = 'GAMEOVER';
+    document.getElementById('final-score').textContent = String(this.score).padStart(6, '0');
+    document.getElementById('final-stows').textContent = this.stows;
+    document.getElementById('gameover').classList.remove('hidden');
+  }
+};
+
+document.getElementById('start-btn').onclick = () => G.start();
+</script>
+</body>
+</html>
