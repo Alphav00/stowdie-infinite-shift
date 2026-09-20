@@ -35,7 +35,18 @@ func _ready() -> void:
 	_create_sfx_pool()
 	_create_music_player()
 	_load_sfx_library()
+	_preload_music_tracks()
 	print("[AudioController] Initialized - SFX Pool: %d" % SFX_POOL_SIZE)
+
+func _preload_music_tracks() -> void:
+	var loaded_tracks = {}
+	for track_name in music_tracks:
+		var path = music_tracks[track_name]
+		if ResourceLoader.exists(path):
+			loaded_tracks[track_name] = load(path)
+		else:
+			push_error("[AudioController] Music file missing: %s" % path)
+	music_tracks = loaded_tracks
 
 func _initialize_audio_buses() -> void:
 	# Note: In production, buses would be set up in AudioBusLayout
@@ -63,7 +74,7 @@ func _create_music_player() -> void:
 
 func _load_sfx_library() -> void:
 	# Placeholder - in production, scan assets/audio/sfx/ directory
-	sfx_library = {
+	var sfx_paths = {
 		"scanner_beep": "res://assets/audio/sfx/Scanner_Beep.wav",
 		"scanner_cursed": "res://assets/audio/sfx/Scanner_Cursed.wav",
 		"stow_success": "res://assets/audio/sfx/Stow_Success.wav",
@@ -76,18 +87,22 @@ func _load_sfx_library() -> void:
 		"alarm": "res://assets/audio/sfx/Alarm.wav",
 	}
 
+	var loaded_sfx = {}
+	for sfx_name in sfx_paths:
+		var path = sfx_paths[sfx_name]
+		if ResourceLoader.exists(path):
+			loaded_sfx[sfx_name] = load(path)
+		else:
+			push_error("[AudioController] SFX file missing: %s" % path)
+	sfx_library = loaded_sfx
+
 ## MUSIC CONTROL
 func play_music(track_name: String, crossfade_duration: float = 2.0) -> void:
 	if not track_name in music_tracks:
 		push_error("[AudioController] Music track not found: %s" % track_name)
 		return
 	
-	var track_path = music_tracks[track_name]
-	if not ResourceLoader.exists(track_path):
-		print("[AudioController] Music file missing: %s" % track_path)
-		return
-	
-	var new_stream = load(track_path)
+	var new_stream = music_tracks[track_name]
 	
 	if current_music.playing:
 		_crossfade_music(new_stream, crossfade_duration)
@@ -135,18 +150,13 @@ func play_sfx(sfx_name: String, volume_db: float = 0.0) -> void:
 		push_error("[AudioController] SFX not found: %s" % sfx_name)
 		return
 	
-	var sfx_path = sfx_library[sfx_name]
-	if not ResourceLoader.exists(sfx_path):
-		print("[AudioController] SFX file missing: %s" % sfx_path)
-		return
-	
 	var player = sfx_players[next_sfx_index]
 	next_sfx_index = (next_sfx_index + 1) % SFX_POOL_SIZE
 	
 	if player.playing:
 		player.stop()
 	
-	player.stream = load(sfx_path)
+	player.stream = sfx_library[sfx_name]
 	player.volume_db = volume_db
 	player.play()
 	
@@ -157,18 +167,13 @@ func play_sfx_3d(sfx_name: String, position: Vector2, volume_db: float = 0.0) ->
 		push_error("[AudioController] SFX not found: %s" % sfx_name)
 		return
 	
-	var sfx_path = sfx_library[sfx_name]
-	if not ResourceLoader.exists(sfx_path):
-		print("[AudioController] SFX file missing: %s" % sfx_path)
-		return
-	
 	var player = sfx_3d_players[next_sfx_3d_index]
 	next_sfx_3d_index = (next_sfx_3d_index + 1) % SFX_POOL_SIZE
 	
 	if player.playing:
 		player.stop()
 	
-	player.stream = load(sfx_path)
+	player.stream = sfx_library[sfx_name]
 	player.volume_db = volume_db
 	player.global_position = position
 	player.play()
